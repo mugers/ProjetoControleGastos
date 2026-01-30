@@ -1,5 +1,3 @@
-
-
 //IMPORTS
 import React, { useState, useEffect } from 'react';
 import { Trash2, Edit, X, Calculator, Users, List, Tag } from 'lucide-react';
@@ -7,7 +5,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, query } from 'firebase/firestore';
 
-
+// ============================================================================
+// CONFIGURAÇÃO
+// ============================================================================
 
 // CONFIGURAÇÃO FIREBASE
 const firebaseConfig = {
@@ -24,13 +24,12 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-
 // ID FIREBASE
 const appId = firebaseConfig.projectId || 'controlegastos-27c00';
 
-
-
+// ============================================================================
 // FRONTEND
+// ============================================================================
 
 const STYLES = `
   :root { --bg: #121212; --card: #1e1e1e; --input: #000; --border: #333; --text: #e0e0e0; --muted: #a0a0a0; --white: #fff; }
@@ -90,11 +89,8 @@ const STYLES = `
   .loading { text-align: center; color: var(--muted); padding: 2rem; font-style: italic; }
 `;
 
-
-
 // CAMADA DE DADOS 
 const Api = {
-  
   
   // Garante que pegamos o ID do usuário atual para segurança.
   _getUid: () => auth.currentUser?.uid,
@@ -145,7 +141,6 @@ const Api = {
     }
   },
 
-
   // CATEGORIAS
   
   // LEITURA: Busca categorias disponíveis.
@@ -160,8 +155,6 @@ const Api = {
     const id = c.id || Api._id();
     await setDoc(doc(Api._col('categorias'), id), { ...c, id });
   },
-
-
 
   // TRANSAÇÕES 
   listarTransacoes: async () => {
@@ -200,8 +193,6 @@ const Api = {
   }
 };
 
-
-
 // COMPONENTES UI
 
 const Input = ({ label, sm, ...props }: any) => (
@@ -213,8 +204,6 @@ const Input = ({ label, sm, ...props }: any) => (
     }
   </div>
 );
-
-
 
 // APP  
 export default function App() {
@@ -263,7 +252,6 @@ export default function App() {
   );
 }
 
-
 // 6. TELAS
 
 function TelaPessoas() {
@@ -287,11 +275,23 @@ function TelaPessoas() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     
-  // A pessoa tem que ter nascido hehe.
-
-     if (Number(form.idade) < 0) {
-      alert("A idade não pode ser negativa.");
+    // A pessoa tem que ter nascido hehe.
+    if (Number(form.idade) <= 0) {
+      alert("A pessoa tem que ter nascido hehe");
       return; // Para a função aqui e não salva
+    }
+
+    // DUPLICIDADE!!!!  Verifica se já existe alguém com mesmo Nome e Idade
+    // O "p.id !== form.id" não deixa registrar um id com exatamente as mesmas infomações.
+    const duplicado = list.some((p: any) => 
+      p.nome.trim().toLowerCase() === form.nome.trim().toLowerCase() && 
+      Number(p.idade) === Number(form.idade) &&
+      p.id !== form.id
+    );
+
+    if (duplicado) {
+      alert("Já existe uma pessoa cadastrada com esse nome e idade.");
+      return; // Bloqueia o salvamento
     }
 
     await Api.salvarPessoa(form); 
@@ -389,9 +389,13 @@ function TelaTransacoes() {
   const [form, setForm] = useState({ descricao: '', valor: '', tipo: 'Despesa', pessoaId: '', categoriaId: '' });
   const [erro, setErro] = useState(''); 
 
-  // Carrega todas as informações necessárias em paralelo para montar a tela
+  
   const refresh = async () => {
-    const [p, c, t] = await Promise.all([Api.listarPessoas(), Api.listarCategorias(), Api.listarTransacoes()]);
+    // Junior Pattern: Carrega um de cada vez em vez de usar Promise.all
+    const p = await Api.listarPessoas();
+    const c = await Api.listarCategorias();
+    const t = await Api.listarTransacoes();
+    
     setData({ pessoas: p as any, cats: c as any });
     setList(t as any);
   };
@@ -411,7 +415,7 @@ function TelaTransacoes() {
     }
   };
 
-  // Helper local para traduzir IDs (armazenados na transação) para Nomes para exibir na tabela
+  // Helper local para traduzir IDs armazenados na transação para Nomes para exibir na tabela
   const getName = (id: string, src: any[]) => src.find(x => x.id === id)?.nome || src.find(x => x.id === id)?.descricao || '-';
 
   return (
@@ -466,9 +470,10 @@ function TelaRelatorio() {
 
   useEffect(() => {
     // Carregamento de dados para o relatório. 
-    // Busca para poder calcular os totais localmente.
     const load = async () => {
-      const [pessoas, transacoes, categorias] = await Promise.all([Api.listarPessoas(), Api.listarTransacoes(), Api.listarCategorias()]);
+      const pessoas = await Api.listarPessoas();
+      const transacoes = await Api.listarTransacoes();
+      const categorias = await Api.listarCategorias();
       
       // Função de cálculo que percorre itens e soma suas transações
       const calc = (items: any[], idKey: string) => items.map(item => {
