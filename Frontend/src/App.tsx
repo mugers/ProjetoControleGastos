@@ -5,9 +5,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, query } from 'firebase/firestore';
 
-// ============================================================================
+
 // CONFIGURAÇÃO
-// ============================================================================
+
 
 // CONFIGURAÇÃO FIREBASE
 const firebaseConfig = {
@@ -27,9 +27,8 @@ const db = getFirestore(app);
 // ID FIREBASE
 const appId = firebaseConfig.projectId || 'controlegastos-27c00';
 
-// ============================================================================
+
 // FRONTEND
-// ============================================================================
 
 const STYLES = `
   :root { --bg: #121212; --card: #1e1e1e; --input: #000; --border: #333; --text: #e0e0e0; --muted: #a0a0a0; --white: #fff; }
@@ -164,7 +163,7 @@ const Api = {
   },
   
   salvarTransacao: async (t: any) => {
-    // Pré-carrega dados auxiliares para validação de Regras de Negócio (Front-end validation).
+    // Pré-carrega dados auxiliares para validação de Regras de Negócio.
     const pessoas = await Api.listarPessoas();
     const cats = await Api.listarCategorias();
     
@@ -281,8 +280,8 @@ function TelaPessoas() {
       return; // Para a função aqui e não salva
     }
 
-    // DUPLICIDADE!!!!  Verifica se já existe alguém com mesmo Nome e Idade
-    // O "p.id !== form.id" não deixa registrar um id com exatamente as mesmas infomações.
+    // DUPLICIDADE!!!!
+    // Verifica se já existe alguém com mesmo Nome e Idade
     const duplicado = list.some((p: any) => 
       p.nome.trim().toLowerCase() === form.nome.trim().toLowerCase() && 
       Number(p.idade) === Number(form.idade) &&
@@ -389,9 +388,7 @@ function TelaTransacoes() {
   const [form, setForm] = useState({ descricao: '', valor: '', tipo: 'Despesa', pessoaId: '', categoriaId: '' });
   const [erro, setErro] = useState(''); 
 
-  
   const refresh = async () => {
-    // Junior Pattern: Carrega um de cada vez em vez de usar Promise.all
     const p = await Api.listarPessoas();
     const c = await Api.listarCategorias();
     const t = await Api.listarTransacoes();
@@ -405,17 +402,17 @@ function TelaTransacoes() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setErro('');
-    // Tenta salvar através da API, que pode retornar um objeto de erro se as regras de negócio falharem
+    // Tenta salvar através da API
     const res = await Api.salvarTransacao(form);
     if (res.erro) {
-      setErro(res.erro); // Exibe o erro 
+      setErro(res.erro); 
     } else {
       refresh();
       setForm({ ...form, descricao: '', valor: '' }); 
     }
   };
 
-  // Helper local para traduzir IDs armazenados na transação para Nomes para exibir na tabela
+  // Helper local para traduzir IDs armazenados na transação  para Nomes para exibir na tabela
   const getName = (id: string, src: any[]) => src.find(x => x.id === id)?.nome || src.find(x => x.id === id)?.descricao || '-';
 
   return (
@@ -470,6 +467,7 @@ function TelaRelatorio() {
 
   useEffect(() => {
     // Carregamento de dados para o relatório. 
+    // Busca dados em sequencia para garantir que tudo carregou
     const load = async () => {
       const pessoas = await Api.listarPessoas();
       const transacoes = await Api.listarTransacoes();
