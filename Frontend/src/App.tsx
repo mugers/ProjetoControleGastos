@@ -64,7 +64,7 @@ const STYLES = `
   .btn { cursor: pointer; border: 1px solid transparent; padding: 0.75rem 1.5rem; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; transition: 0.2s; background: transparent; color: var(--white); }
   .btn-nav { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); padding: 0.6rem 1.2rem; }
   .btn-nav:hover { color: var(--white); background: #222; border-color: var(--border); }
-  .btn-nav.active { background: #000; color: #fff; border-color: #fff; }
+  .btn-nav.active { background: #ffffff; color: #000000; border-color: #000000; }
   .btn-primary { background: #000; color: #fff; border-color: #fff; }
   .btn-primary:hover { background: #fff; color: #000; }
   .btn-sec { border-color: var(--border); }
@@ -237,7 +237,7 @@ export default function App() {
       <style>{STYLES}</style>
       <nav className="nav">
         <div className="nav-in">
-          <div className="brand"><Calculator size={24} /> Controle Jr.</div>
+          <div className="brand"><Calculator size={45} color='green' /> Controle de gastos</div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {[
               { id: 'pessoas', label: 'Pessoas', icon: <Users size={18}/> },
@@ -285,7 +285,15 @@ function TelaPessoas() {
   
   // Manipulador de envio do formulário 
   const handleSubmit = async (e: any) => {
-    e.preventDefault(); 
+    e.preventDefault();
+    
+  // A pessoa tem que ter nascido hehe.
+
+     if (Number(form.idade) < 0) {
+      alert("A idade não pode ser negativa.");
+      return; // Para a função aqui e não salva
+    }
+
     await Api.salvarPessoa(form); 
     setForm({ id: '', nome: '', idade: '' }); // Limpa o formulário
     refresh(); // Atualiza a lista na tela
