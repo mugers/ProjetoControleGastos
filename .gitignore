@@ -23,12 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignorar chave do Firebase
+# Ignorar chave do Firebase e pastas de sistema
 Backend/firebase_key.json
-
-# Ignorar arquivos de build (lixo gerado pelo .NET)
 **/bin/
 **/obj/
-
-# Ignorar configurações locais do VS Code
 .vscode/
